@@ -1,0 +1,10 @@
+malumotnomalar/
+Natijalar/
+build/
+dist/
+*.spec
+__pycache__/
+# Hisobotlar va reyestr (shaxsiy ma'lumotlar) repoga qo'shilmaydi
+*.xlsm
+*.xls
+!nazoratlar.xlsx
