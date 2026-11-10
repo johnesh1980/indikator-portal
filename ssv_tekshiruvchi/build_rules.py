@@ -109,11 +109,15 @@ OVERRIDES = {
         "Shablonda '...10:11:14' yozilgan; juft nazorat (17 = 5+7+9−11−13−15) va haqiqiy hisobot (141 satr) "
         "bo'yicha '...10:12:14' bo'lishi kerak — tuzatildi, tasdiqlash kerak"),
 }
-# Shu shakldagi ayirishli (=1C) nazoratlar: haqiqiy hisobotda hamma satrda buziladi, ustunlar ma'nosini aniqlash kerak
-DISABLE_PREFIX = {
-    (12, "=1C:"): "Haqiqiy hisobotda (Тўрткўл т.) barcha satrlarda buziladi — ustunlar tartibini tasdiqlash kerak, "
-                  "shu vaqtgacha o'chirildi",
-}
+# 12-SSV: "Oxiriga dispanserda (48–56) = Boshiga (1–9) + Olinganlar (28–36) − Chiqarilganlar (37–45)".
+# Shablonda "Olinganlar" hadi tushib qolgan (=1C:48:1:37:). Foydalanuvchi 10.11.2026 da tasdiqladi.
+for _i in range(9):
+    OVERRIDES[(12, f"=1C:{48 + _i}:{1 + _i}:{37 + _i}:")] = (
+        f"=1C:{48 + _i}:{1 + _i}:{28 + _i}:{37 + _i}:",
+        f"Shablonda '{48 + _i} = {1 + _i} − {37 + _i}' yozilgan, 'Olinganlar' ({28 + _i}-ustun) tushib qolgan. "
+        f"To'g'risi: Oxiriga = Boshiga + Olinganlar − Chiqarilganlar (tasdiqlangan)")
+# Butun prefiks bo'yicha o'chiriladigan nazoratlar (hozircha yo'q)
+DISABLE_PREFIX: dict = {}
 
 
 def build(paths: list[str], out_path: str) -> None:
