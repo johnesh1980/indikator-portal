@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "Ovoz → Matn",
+    "slug": "ovoz-matn",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0F1420",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "uz.ovozmatn.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Ma'ruza va suhbatlarni matnga aylantirish uchun mikrofon kerak.",
+        "NSSpeechRecognitionUsageDescription": "Qurilma rejimida nutqni matnga aylantirish uchun kerak.",
+        "UIBackgroundModes": ["audio"]
+      }
+    },
+    "android": {
+      "package": "uz.ovozmatn.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0F1420",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": ["android.permission.RECORD_AUDIO", "android.permission.INTERNET"],
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      [
+        "@siteed/audio-studio",
+        {
+          "enablePhoneStateHandling": false,
+          "enableNotifications": true,
+          "enableBackgroundAudio": true,
+          "enableDeviceDetection": false
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Ma'ruza va suhbatlarni matnga aylantirish uchun mikrofon kerak.",
+          "speechRecognitionPermission": "Qurilma rejimida nutqni matnga aylantirish uchun kerak.",
+          "androidSpeechServicePackages": ["com.google.android.googlequicksearchbox"]
+        }
+      ],
+      "expo-sharing"
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
