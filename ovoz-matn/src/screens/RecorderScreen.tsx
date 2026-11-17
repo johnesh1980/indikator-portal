@@ -17,7 +17,7 @@ import { saveDocxToFolder, shareDocx } from '../lib/exportFile';
 import { saveSession, type SessionData, type Settings } from '../lib/storage';
 import { detectedLanguages, formatTimestamp, segmentsToPlainText, type Segment } from '../lib/transcript';
 import { useTranscriber } from '../lib/useTranscriber';
-import { colors } from '../theme';
+import { colors, langColor } from '../theme';
 
 interface Props {
   settings: Settings;
@@ -26,6 +26,8 @@ interface Props {
   onOpenSettings: () => void;
   onOpenHistory: () => void;
   onConsumeOpened: () => void;
+  /** Qurilma rejimida tanlangan tilni sozlamalarda saqlash */
+  onDeviceLangChange: (lang: Settings['deviceLang']) => void;
 }
 
 const newSessionId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -35,7 +37,13 @@ const defaultTitle = (ts: number) => {
   return `Yozuv ${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-export default function RecorderScreen({ settings, opened, onOpenSettings, onOpenHistory, onConsumeOpened }: Props) {
+const QUICK_LANGS: { code: Settings['deviceLang']; flag: string; short: string }[] = [
+  { code: 'uz-UZ', flag: '🇺🇿', short: 'UZ' },
+  { code: 'ru-RU', flag: '🇷🇺', short: 'RU' },
+  { code: 'en-US', flag: '🇬🇧', short: 'EN' },
+];
+
+export default function RecorderScreen({ settings, opened, onOpenSettings, onOpenHistory, onConsumeOpened, onDeviceLangChange }: Props) {
   const tr = useTranscriber(settings);
   const [doc, setDoc] = useState(() => {
     const now = Date.now();
@@ -169,14 +177,14 @@ export default function RecorderScreen({ settings, opened, onOpenSettings, onOpe
       : tr.state === 'recording'
         ? settings.engine === 'cloud'
           ? 'Tinglanmoqda · til avtomatik aniqlanadi'
-          : `Tinglanmoqda · ${settings.deviceLang}`
+          : `Tinglanmoqda · ${tr.deviceLang}`
         : tr.state === 'paused'
           ? 'Pauza'
           : tr.state === 'stopping'
             ? 'Yakunlanmoqda…'
             : settings.engine === 'cloud'
               ? "☁️ Bulut · O'zbek / Русский / English"
-              : `📱 Qurilma · ${settings.deviceLang}`;
+              : `📱 Qurilma · ${tr.deviceLang}`;
 
   return (
     <View style={styles.root}>
@@ -223,6 +231,29 @@ export default function RecorderScreen({ settings, opened, onOpenSettings, onOpe
 
       {/* Boshqaruv paneli */}
       <View style={styles.footer}>
+        {settings.engine === 'device' && (
+          <View style={styles.langRow}>
+            <Text style={styles.langLabel}>Til:</Text>
+            {QUICK_LANGS.map((l) => {
+              const active = tr.deviceLang === l.code;
+              return (
+                <Pressable
+                  key={l.code}
+                  disabled={tr.state === 'stopping'}
+                  onPress={() => {
+                    tr.switchDeviceLang(l.code);
+                    onDeviceLangChange(l.code);
+                  }}
+                  style={[styles.langChip, active && { backgroundColor: langColor(l.short.toLowerCase()), borderColor: langColor(l.short.toLowerCase()) }]}
+                >
+                  <Text style={[styles.langChipText, active && styles.langChipTextActive]}>
+                    {l.flag} {l.short}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
         <Text style={styles.timer}>{formatTimestamp(totalMs) || '00:00'}</Text>
         <View style={styles.controls}>
           <View style={styles.side}>
@@ -356,6 +387,18 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     paddingHorizontal: 16,
   },
+  langRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 10 },
+  langLabel: { color: colors.textDim, fontSize: 13, marginRight: 2 },
+  langChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface2,
+  },
+  langChipText: { color: colors.textDim, fontSize: 14, fontWeight: '600' },
+  langChipTextActive: { color: '#0F1420' },
   timer: { color: colors.text, fontSize: 22, fontWeight: '300', textAlign: 'center', fontVariant: ['tabular-nums'] },
   controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   side: { width: 96, alignItems: 'center' },

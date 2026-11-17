@@ -68,7 +68,9 @@ export default function TranscriptView({
             </View>
             <Text style={styles.text} selectable={!live}>
               {s.text.trim()}
-              {isLast && !pendingStartsNew && pendingText ? <Text style={styles.pending}>{pendingText}</Text> : null}
+              {isLast && !pendingStartsNew && pendingText ? (
+                <Text style={styles.pending}>{/^\s/.test(pendingText) ? pendingText : ' ' + pendingText}</Text>
+              ) : null}
             </Text>
           </Pressable>
         );

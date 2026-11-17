@@ -23,7 +23,9 @@ U **o'zbek, rus va ingliz** tillarini **avtomatik aniqlaydi** (til gap ichida al
 ## Nutq tanish rejimlari
 
 1. **☁️ Bulut (tavsiya etiladi).** [Soniox](https://soniox.com) real-time API ishlatiladi. U o'zbek tilini yaxshi biladi va tilni har bir so'z darajasida aniqlaydi. Internet hamda API kalit kerak: kalitni [console.soniox.com](https://console.soniox.com) saytida olib, *Sozlamalar → Soniox API kaliti* maydoniga kiritasiz.
-2. **📱 Qurilma.** Telefonning o'z nutq tanish tizimi (Google / Apple) ishlatiladi. Kalit kerak emas, lekin til avtomatik aniqlanmaydi, uni qo'lda tanlaysiz.
+2. **📱 Qurilma.** Telefonning o'z nutq tanish tizimi (Google / Apple) ishlatiladi. Kalit kerak emas, lekin til avtomatik aniqlanmaydi.
+   Buning o'rniga asosiy ekranda **Til: 🇺🇿 UZ · 🇷🇺 RU · 🇬🇧 EN** tugmalari bor. Ma'ruzachi tilni almashtirganda kerakli tugmani bosasiz: yozish to'xtamaydi,
+   aytilgan gap eski til bilan saqlanadi, yangi gap esa yangi abzasda, to'g'ri til belgisi bilan boshlanadi. Oxirgi tanlangan til eslab qolinadi.
 
 ## O'rnatish va ishga tushirish
 

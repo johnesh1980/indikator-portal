@@ -39,6 +39,14 @@ export default function App() {
                 onConsumeOpened={() => setOpened(null)}
                 onOpenSettings={() => setScreen('settings')}
                 onOpenHistory={() => setScreen('history')}
+                onDeviceLangChange={(lang) =>
+                  setSettings((prev) => {
+                    if (!prev || prev.deviceLang === lang) return prev;
+                    const next = { ...prev, deviceLang: lang };
+                    saveSettings(next).catch(() => {});
+                    return next;
+                  })
+                }
               />
             </View>
             {screen === 'settings' && (

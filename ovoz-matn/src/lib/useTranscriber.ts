@@ -13,6 +13,8 @@ import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-spe
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SonioxSession } from './soniox';
 import type { Settings } from './storage';
+
+type DeviceLang = Settings['deviceLang'];
 import { TranscriptBuilder, type Segment } from './transcript';
 
 export type RecState = 'idle' | 'connecting' | 'recording' | 'paused' | 'stopping';
@@ -159,19 +161,33 @@ export function useTranscriber(settings: Settings) {
   }, []);
 
   // ---------------- Qurilma (offline/native) ----------------
-  const deviceLangShort = settings.deviceLang.slice(0, 2);
+  /** Foydalanuvchi tanlagan til (yozish paytida almashtirilishi mumkin) */
+  const deviceLangRef = useRef<DeviceLang>(settings.deviceLang);
+  const [deviceLang, setDeviceLangState] = useState<DeviceLang>(settings.deviceLang);
+  /** Hozir ishlayotgan tanish sessiyasining tili — natijalar shu til bilan belgilanadi */
+  const activeLangRef = useRef<DeviceLang>(settings.deviceLang);
+
+  // Yozish to'xtab turganda sozlamadagi til o'zgarsa — sinxronlash
+  useEffect(() => {
+    if (stateRef.current === 'idle') {
+      deviceLangRef.current = settings.deviceLang;
+      setDeviceLangState(settings.deviceLang);
+    }
+  }, [settings.deviceLang]);
+
   useSpeechRecognitionEvent('result', (ev) => {
     if (engineRef.current !== 'device' || stateRef.current === 'idle') return;
     const text = ev.results[0]?.transcript ?? '';
     if (!text) return;
-    builder.current.apply([{ text: (ev.isFinal ? ' ' : '') + text, is_final: ev.isFinal, language: deviceLangShort }]);
+    const language = activeLangRef.current.slice(0, 2);
+    builder.current.apply([{ text: (ev.isFinal ? ' ' : '') + text, is_final: ev.isFinal, language }]);
     refresh();
   });
   useSpeechRecognitionEvent('error', (ev) => {
     if (engineRef.current !== 'device') return;
     if (ev.error === 'no-speech' || ev.error === 'speech-timeout' || ev.error === 'aborted') return;
     if (ev.error === 'language-not-supported') {
-      setError("Bu til qurilmada qo'llab-quvvatlanmaydi. Bulut rejimini tanlang.");
+      setError(`${activeLangRef.current} tili bu qurilmada qo'llab-quvvatlanmaydi. Boshqa tilni yoki Bulut rejimini tanlang.`);
     } else {
       setError(`Nutq tanish xatosi: ${ev.message || ev.error}`);
     }
@@ -179,7 +195,8 @@ export function useTranscriber(settings: Settings) {
   });
   useSpeechRecognitionEvent('end', () => {
     if (engineRef.current !== 'device') return;
-    // Android ba'zan uzun nutqda to'xtaydi — yozish davom etayotgan bo'lsa qayta ishga tushiramiz
+    // Android ba'zan uzun nutqda to'xtaydi, til almashtirilganda ham shu yerga keladi —
+    // yozish davom etayotgan bo'lsa (yangi til bilan) qayta ishga tushiramiz
     if (stateRef.current === 'recording') {
       builder.current.breakParagraph();
       startDevice();
@@ -189,15 +206,31 @@ export function useTranscriber(settings: Settings) {
   });
 
   const startDevice = useCallback(() => {
+    activeLangRef.current = deviceLangRef.current;
     ExpoSpeechRecognitionModule.start({
-      lang: settings.deviceLang,
+      lang: deviceLangRef.current,
       interimResults: true,
       continuous: true,
       addsPunctuation: true,
       requiresOnDeviceRecognition: false,
       androidIntentOptions: { EXTRA_LANGUAGE_MODEL: 'free_form' },
     });
-  }, [settings.deviceLang]);
+  }, []);
+
+  /**
+   * Qurilma rejimida tilni tez almashtirish. Yozish ketayotgan bo'lsa joriy
+   * tanish yakunlanadi (aytilgan gap eski til bilan saqlanadi), so'ng 'end'
+   * hodisasida yangi til bilan qayta boshlanadi va yangi abzas ochiladi.
+   */
+  const switchDeviceLang = useCallback((lang: DeviceLang) => {
+    if (lang === deviceLangRef.current) return;
+    deviceLangRef.current = lang;
+    setDeviceLangState(lang);
+    if (engineRef.current === 'device' && stateRef.current === 'recording') {
+      // Yangi abzas 'end' hodisasida ochiladi — kutilayotgan bo'lak eski abzasga qo'shiladi
+      ExpoSpeechRecognitionModule.stop();
+    }
+  }, []);
 
   // ---------------- Umumiy boshqaruv ----------------
   const start = useCallback(
@@ -206,6 +239,8 @@ export function useTranscriber(settings: Settings) {
       setError(null);
       setNotice(null);
       engineRef.current = settings.engine;
+      deviceLangRef.current = settings.deviceLang;
+      setDeviceLangState(settings.deviceLang);
 
       if (settings.engine === 'cloud' && !settings.sonioxApiKey.trim()) {
         setError("Avval Sozlamalarda Soniox API kalitini kiriting (yoki Qurilma rejimini tanlang).");
@@ -349,5 +384,5 @@ export function useTranscriber(settings: Settings) {
     [],
   );
 
-  return { state, view, error, notice, elapsedMs, start, pause, resume, stop, reset, dismissError: () => setError(null) };
+  return { state, view, error, notice, elapsedMs, start, pause, resume, stop, reset, deviceLang, switchDeviceLang, dismissError: () => setError(null) };
 }
